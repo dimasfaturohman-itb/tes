@@ -1,0 +1,45 @@
+body{
+    background:#f5f5f5;
+    font-family:Arial,sans-serif;
+}
+
+.hero-banner{
+    background:#fff0f0;
+    border-radius:30px;
+    padding:80px;
+}
+
+.hero-content h1{
+    font-size:55px;
+    font-weight:bold;
+}
+
+.category-card{
+    background:white;
+    border-radius:25px;
+    padding:30px;
+    display:block;
+    text-align:center;
+    color:black;
+}
+
+.product-card{
+    background:white;
+    border-radius:25px;
+    overflow:hidden;
+    transition:0.3s;
+}
+
+.product-card:hover{
+    transform:translateY(-5px);
+}
+
+.product-body{
+    padding:20px;
+}
+
+.price{
+    color:#ff4d6d;
+    font-size:22px;
+    font-weight:bold;
+}

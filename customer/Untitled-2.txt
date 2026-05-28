@@ -1,0 +1,124 @@
+<?php
+session_start();
+include "../config/koneksi.php";
+
+if (!isset($_SESSION['id_user'])) {
+    header("Location: ../auth/login.php");
+    exit;
+}
+
+$id_user = $_SESSION['id_user'];
+
+$query = mysqli_query($conn, "
+    SELECT *
+    FROM pesanan
+    WHERE id_user = '$id_user'
+    AND LOWER(status) = 'dikirim'
+    ORDER BY id_pesanan DESC
+");
+
+include "../template/header.php";
+include "../template/navbar_customer.php";
+?>
+
+<style>
+body { background: #f5f5f5; font-family: 'Segoe UI', sans-serif; }
+.tracking-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); border: 1px solid #e8e8e8; }
+.shopee-orange { color: #ee4d2d !important; }
+.bg-shopee-orange { background-color: #ee4d2d !important; color: white; }
+.status-badge { color: #ee4d2d; font-size: 14px; font-weight: 600; text-transform: uppercase; }
+.product-item { display: flex; align-items: center; gap: 15px; padding: 15px 0; border-bottom: 1px dashed #e8e8e8; }
+.product-img { width: 65px; height: 65px; border-radius: 6px; overflow: hidden; border: 1px solid #efefef; flex-shrink: 0; }
+.product-img img { width: 100%; height: 100%; object-fit: cover; }
+.shopee-timeline { position: relative; padding-left: 35px; margin-top: 25px; }
+.shopee-timeline::before { content: ''; position: absolute; left: 11px; top: 10px; bottom: 10px; width: 2px; background: #e8e8e8; }
+.shopee-timeline-item { position: relative; padding-bottom: 25px; }
+.shopee-marker { position: absolute; left: -30px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #ccc; border: 2px solid #fff; box-shadow: 0 0 0 2px #ccc; z-index: 2; }
+.shopee-timeline-item:first-child .shopee-marker { background: #26a69a; box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.3); width: 14px; height: 14px; left: -31px; top: 4px; }
+.shopee-timeline-item:first-child .timeline-title { color: #26a69a !important; font-weight: 600; }
+.timeline-title { font-size: 14px; color: #555; margin-bottom: 2px; }
+.timeline-desc { font-size: 13px; color: #757575; margin-bottom: 4px; }
+.timeline-time { font-size: 11px; color: #929292; }
+.back-home-btn { position: fixed; bottom: 25px; right: 25px; width: 50px; height: 50px; background: #ee4d2d; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(238, 77, 45, 0.3); text-decoration: none; z-index: 999; transition: 0.2s ease; }
+.back-home-btn:hover { transform: scale(1.08); background: #e03c1a; color: white; }
+</style>
+
+<a href="dashboard.php" class="back-home-btn"><i class="bi bi-house-door-fill fs-5"></i></a>
+
+<div class="container py-4" style="max-width: 700px;">
+    <h4 class="fw-bold mb-4">🚚 Lacak Pengiriman</h4>
+
+    <?php if(mysqli_num_rows($query) > 0) : ?>
+        <?php while($pesanan = mysqli_fetch_assoc($query)) : 
+            $id_pesanan = $pesanan['id_pesanan'];
+            $detail = mysqli_query($conn, "SELECT dp.*, p.nama_produk, p.harga, p.gambar FROM detail_pesanan dp JOIN produk p ON dp.id_produk = p.id_produk WHERE dp.id_pesanan = '$id_pesanan'");
+            $tracking = mysqli_query($conn, "SELECT * FROM tracking WHERE id_pesanan = '$id_pesanan' ORDER BY waktu DESC");
+        ?>
+        <div class="tracking-card">
+            <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+                <div>
+                    <div class="fw-bold text-dark mb-1">No. Pesanan: <span class="text-secondary">#<?= $pesanan['id_pesanan']; ?></span></div>
+                    <div class="text-muted small">Kurir: <span class="fw-semibold text-dark"><?= $pesanan['ekspedisi'] ?? 'Shopee Express'; ?></span></div>
+                    <div class="text-muted small mt-1">Resi: <span class="fw-bold text-dark"><?= $pesanan['nomor_resi'] ?? '-'; ?></span></div>
+                </div>
+                <div class="text-end">
+                    <div class="status-badge"><?= $pesanan['status']; ?></div>
+                    <?php 
+                    $check_diterima = mysqli_query($conn, "SELECT * FROM tracking WHERE id_pesanan='$id_pesanan' AND LOWER(keterangan) LIKE '%diterima%'");
+                    if(mysqli_num_rows($check_diterima) > 0) : ?>
+                        <form action="proses_konfirmasi.php" method="POST" class="mt-2">
+                            <input type="hidden" name="id_pesanan" value="<?= $id_pesanan; ?>">
+                            <button type="submit" name="konfirmasi" class="btn btn-sm bg-shopee-orange rounded-pill px-3">Konfirmasi Diterima</button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="pb-2">
+                <?php while($item = mysqli_fetch_assoc($detail)) : ?>
+                <div class="product-item">
+                    <div class="product-img"><img src="../admin/upload/<?= $item['gambar']; ?>" onerror="this.src='../assets/img/no-image.png'"></div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold text-dark"><?= $item['nama_produk']; ?></div>
+                        <small class="text-muted">Jumlah: <?= $item['qty']; ?> x Rp <?= number_format($item['harga']); ?></small>
+                    </div>
+                </div>
+                <?php endwhile; ?>
+            </div>
+
+            <div class="bg-light rounded-3 p-3 mt-3">
+                <div class="fw-bold text-dark small border-bottom pb-2 mb-2"><i class="bi bi-geo-alt-fill shopee-orange me-1"></i> Status Pengiriman</div>
+                <div class="shopee-timeline">
+                    <?php if(mysqli_num_rows($tracking) > 0) { 
+                        while($t = mysqli_fetch_assoc($tracking)) { ?>
+                        <div class="shopee-timeline-item">
+                            <div class="shopee-marker"></div>
+                            <div class="ms-1">
+                                <div class="timeline-title fw-semibold text-dark"><?= htmlspecialchars($t['lokasi']); ?></div>
+                                <div class="timeline-desc"><?= htmlspecialchars($t['keterangan']); ?></div>
+                                <div class="timeline-time"><?= date('d-m-Y H:i', strtotime($t['waktu'])); ?> WIB</div>
+                            </div>
+                        </div>
+                    <?php } } else { ?>
+                        <div class="shopee-timeline-item">
+                            <div class="shopee-marker"></div>
+                            <div class="ms-1">
+                                <div class="timeline-title text-dark">Pesanan Sedang Dikemas</div>
+                                <div class="timeline-time"><?= date('d-m-Y H:i', strtotime($pesanan['tanggal_pesan'])); ?> WIB</div>
+                            </div>
+                        </div>
+                    <?php } ?>
+                </div>
+            </div>
+        </div>
+        <?php endwhile; ?>
+    <?php else : ?>
+        <div class="text-center py-5 bg-white rounded-3">
+            <i class="bi bi-truck display-1 text-muted opacity-25"></i>
+            <h5 class="fw-bold mt-3">Belum Ada Paket Dikirim</h5>
+            <a href="dashboard.php" class="btn bg-shopee-orange rounded-pill px-4 mt-2">Kembali Belanja</a>
+        </div>
+    <?php endif; ?>
+</div>
+
+<?php include "../template/footer.php"; ?>

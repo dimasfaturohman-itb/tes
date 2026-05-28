@@ -1,0 +1,50 @@
+.customer-banner{
+    background:linear-gradient(to right,#ffe4ea,#fff1f4);
+    padding:40px;
+    border-radius:30px;
+}
+
+.customer-menu{
+    background:white;
+    border-radius:30px;
+    padding:40px 20px;
+    text-align:center;
+    display:block;
+    color:black;
+    transition:0.3s;
+    box-shadow:0 5px 20px rgba(0,0,0,0.05);
+}
+
+.customer-menu:hover{
+    transform:translateY(-5px);
+}
+
+.customer-menu i{
+    font-size:40px;
+    color:#ff4d6d;
+    margin-bottom:15px;
+}
+
+.tracking-wrapper{
+    display:flex;
+    justify-content:space-between;
+    margin-top:40px;
+}
+
+.tracking-item{
+    flex:1;
+    text-align:center;
+}
+
+.circle{
+    width:25px;
+    height:25px;
+    border-radius:50%;
+    background:#ddd;
+    margin:auto;
+    margin-bottom:10px;
+}
+
+.tracking-item.active .circle{
+    background:#ff4d6d;
+}
